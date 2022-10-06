@@ -11,6 +11,7 @@ filelists/miniImagenet/*.json
 save/CUB
 save/miniImagenet
 save/Fashion 
+save/cross
 
 __pycache__
 */__pycache__ 
