@@ -112,3 +112,40 @@ class EpisodicBatchSampler(object):
     def __iter__(self):
         for i in range(self.n_episodes):
             yield torch.randperm(self.n_classes)[:self.n_way]
+
+            
+class ConditionSetDataset: 
+    def __init__(self, data_folder, n_way, batch_size, transform, num_episode, train=False, val=False, test=False): 
+        self.data_list = [os.path.join(data_folder, f) for f in os.listdir(data_folder) if os.path.isfile(os.path.join(data_folder, f)) and f[0] != '.'] 
+        self.sub_dataloader = []
+        self.num_episode = num_episode
+        self.data_list.sort() 
+        
+        if train: 
+            idx = np.array([2, 4 ,5])
+            self.data_list = np.array(self.data_list)[idx].tolist()
+        if val: 
+            idx = np.array([3])
+            self.data_list = np.array(self.data_list)[idx].tolist()
+        if test:
+            idx = np.array([0, 1])
+            self.data_list = np.array(self.data_list)[idx].tolist()
+        
+        for data in self.data_list:
+            sub_dataset = SetDataset(data, batch_size, transform=transform)
+            sub_sampler = EpisodicBatchSampler(len(sub_dataset.cl_list), n_way, num_episode)
+            sub_data_loader_params = dict(batch_sampler=sub_sampler,
+                                          num_workers=0,
+                                          pin_memory=False) 
+#             self.sub_dataloader.append(torch.utils.data.DataLoader(sub_dataset, **sub_data_loader_params))
+            self.sub_dataloader.append(InfiniteDataLoader(sub_dataset, **sub_data_loader_params))
+            
+    def __getitem__(self, i): 
+        i = i % len(self.data_list)
+#         print(self.sub_dataloader[i], i)
+        data = next(iter(self.sub_dataloader[i]))
+        
+        return data
+    
+    def __len__(self): 
+        return self.num_episode

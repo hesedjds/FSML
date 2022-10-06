@@ -2,6 +2,9 @@ filelists/CUB/CUB_200_2011
 filelists/CUB/*.json 
 filelists/CUB/*.txt 
 
+filelists/Fashion/img
+filelists/Fashion/*.json 
+
 filelists/miniImagenet/miniimagenet
 filelists/miniImagenet/*.json 
 
@@ -14,3 +17,4 @@ __pycache__
 filelists/*/.ipynb_checkpoints
 methods/.ipynb_checkpoints
 data/.ipynb_checkpoints 
+.ipynb_checkpoints/

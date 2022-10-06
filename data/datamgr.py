@@ -8,7 +8,7 @@ from PIL import Image
 import numpy as np
 import torchvision.transforms as transforms
 import data.additional_transforms as add_transforms
-from data.dataset import SimpleDataset, SetDataset, EpisodicBatchSampler
+from data.dataset import SimpleDataset, SetDataset, EpisodicBatchSampler, ConditionSetDataset
 from abc import abstractmethod
 from torch.utils.data.sampler import Sampler
 
@@ -224,4 +224,26 @@ class SetDataManager(DataManager):
         sampler = EpisodicBatchSampler(len(dataset), self.n_way, self.n_eposide )  
         data_loader_params = dict(batch_sampler = sampler,  num_workers = 16, pin_memory = True)       
         data_loader = torch.utils.data.DataLoader(dataset, **data_loader_params)
+        return data_loader
+
+    
+class AttributeDataManager(DataManager): 
+    def __init__(self, image_size, n_way, n_support, n_query, n_episode=100, train=False, val=False, test=False): 
+        super(AttributeDataManager, self).__init__() 
+        self.image_size = image_size
+        self.n_way = n_way
+        self.batch_size = n_support + n_query 
+        self.n_episode = n_episode 
+        
+        self.trans_loader = TransformLoader(image_size) 
+        self.train = train 
+        self.val = val
+        self.test = test
+        
+    def get_data_loader(self, data_folder, aug): 
+        transform = self.trans_loader.get_composed_transform(aug)
+        dataset = ConditionSetDataset(data_folder, self.n_way, self.batch_size, transform, self.n_episode, train=self.train, val=self.val, test=self.test) 
+        data_loader_params = dict(batch_size=1, shuffle=True, num_workers=12, pin_memory=True) 
+        data_loader = torch.utils.data.DataLoader(dataset, **data_loader_params) 
+        
         return data_loader

@@ -5,7 +5,7 @@ import os
 
 import configs
 import backbone
-from data.datamgr import SetDataManager
+from data.datamgr import SetDataManager, AttributeDataManager
 from methods.baselinetrain import BaselineTrain
 from methods.crml import CRML
 from pytorch_metric_learning import losses 
@@ -54,6 +54,8 @@ if __name__=='__main__':
     elif params.dataset == 'CUB' or params.dataset == 'miniImagenet':
         base_file = configs.data_dir[params.dataset] + 'base.json' 
         val_file   = configs.data_dir[params.dataset] + 'val.json'
+    elif params.dataset == 'Fashion':
+        base_folder = configs.data_dir[params.dataset]
 
     image_size = 224
     params.stop_epoch = 600 # default
@@ -64,24 +66,36 @@ if __name__=='__main__':
     if params.method == 'sft':
         num_samples_per_class = 5
         n_way = params.batch_size // num_samples_per_class
-        train_few_shot_params = dict(n_way=n_way, n_support=0, n_query=num_samples_per_class)  # batch_size = n_support + n_query
-        base_datamgr = SetDataManager(image_size, **train_few_shot_params)
-        base_loader = base_datamgr.get_data_loader(base_file, aug=params.train_aug)
-
+        train_few_shot_params = dict(n_way=n_way, n_support=0, n_query=num_samples_per_class) 
         test_few_shot_params = dict(n_way=params.test_n_way, n_support=0, n_query=params.n_query)
-        val_datamgr = SetDataManager(image_size, **test_few_shot_params)
-        val_loader = val_datamgr.get_data_loader(val_file, aug=False)
+        
+        if params.dataset == 'Fashion': 
+            base_datamgr = AttributeDataManager(image_size, train=True, **train_few_shot_params)
+            base_loader = base_datamgr.get_data_loader(base_folder, aug=params.train_aug)
+            val_datamgr  = AttributeDataManager(image_size, val=True, **test_few_shot_params)
+            val_loader   = val_datamgr.get_data_loader(base_folder, aug=False)
+        else:
+            base_datamgr = SetDataManager(image_size, **train_few_shot_params)
+            base_loader = base_datamgr.get_data_loader(base_file, aug=params.train_aug)
+            val_datamgr = SetDataManager(image_size, **test_few_shot_params)
+            val_loader = val_datamgr.get_data_loader(val_file, aug=False)
         
         model = BaselineTrain(base_model, params, loss_fn=loss_fn)
 
     elif params.method == 'crml':
         train_few_shot_params   = dict(n_way=params.train_n_way, n_support=params.n_shot)
-        base_datamgr            = SetDataManager(image_size, n_query=params.n_query, **train_few_shot_params)
-        base_loader             = base_datamgr.get_data_loader( base_file , aug = params.train_aug )
-
         test_few_shot_params    = dict(n_way=params.test_n_way, n_support=params.n_shot)
-        val_datamgr             = SetDataManager(image_size, n_query=params.n_query, **test_few_shot_params)
-        val_loader              = val_datamgr.get_data_loader( val_file, aug = False)
+        
+        if params.dataset == 'Fashion':
+            base_datamgr = AttributeDataManager(image_size, train=True, n_query=params.n_query, **train_few_shot_params)
+            base_loader  = base_datamgr.get_data_loader(base_folder, aug=params.train_aug )
+            val_datamgr  = AttributeDataManager(image_size, val=True, n_query=params.n_query, **test_few_shot_params)
+            val_loader   = val_datamgr.get_data_loader(base_folder, aug=False)
+        else:
+            base_datamgr = SetDataManager(image_size, n_query=params.n_query, **train_few_shot_params)
+            base_loader = base_datamgr.get_data_loader( base_file , aug = params.train_aug )
+            val_datamgr = SetDataManager(image_size, n_query=params.n_query, **test_few_shot_params)
+            val_loader = val_datamgr.get_data_loader( val_file, aug = False)
         
         #a batch for SetDataManager: a [n_way, n_support + n_query, dim, w, h] tensor        
         backbone.SimpleBlock.mtl = True
