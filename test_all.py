@@ -42,14 +42,15 @@ if __name__ == '__main__':
 
     split = 'novel'
     image_size = 224
-
-    if params.dataset == 'cross':
-        loadfile   = configs.data_dir['CUB'] + split +'.json'
+    
+    if params.dataset == 'Fashion':
+        base_folder = configs.data_dir['Fashion']
+        datamgr = AdaptAndRetreiveManager(image_size, adapt_way=params.test_n_way, n_shot=params.n_shot,
+                                          data_file=base_folder, is_condition_set=True, aug=False, test=True)
     else:
-        loadfile    = configs.data_dir[params.dataset] + split + '.json'
-        
-    datamgr = AdaptAndRetreiveManager(image_size, adapt_way=params.test_n_way, n_shot=params.n_shot,
-                                      data_file=loadfile, is_condition_set=False, aug=False, test=True)
+        loadfile = configs.data_dir[params.dataset] + split + '.json'
+        datamgr = AdaptAndRetreiveManager(image_size, adapt_way=params.test_n_way, n_shot=params.n_shot,
+                                          data_file=loadfile, is_condition_set=False, aug=False, test=True)
 
     model.task_update_num = 10
     model.eval()
