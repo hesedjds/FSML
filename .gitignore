@@ -1,0 +1,16 @@
+filelists/CUB/CUB_200_2011
+filelists/CUB/*.json 
+filelists/CUB/*.txt 
+
+filelists/miniImagenet/miniimagenet
+filelists/miniImagenet/*.json 
+
+save/CUB
+save/miniImagenet
+save/Fashion 
+
+__pycache__
+*/__pycache__ 
+filelists/*/.ipynb_checkpoints
+methods/.ipynb_checkpoints
+data/.ipynb_checkpoints 
